@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: NLP Processor - Extrai eventos estruturados de raw_crawls usando Groq/Llama
+
+Parameters:
+  MongoDbUri:
+    Type: String
+    Description: MongoDB Atlas connection string
+    NoEcho: true
+  MongoDbName:
+    Type: String
+    Description: Nome do banco de dados MongoDB
+    Default: role_sc
+  GroqApiKey:
+    Type: String
+    Description: API Key do Groq
+    NoEcho: true
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Timeout: 300
+    MemorySize: 256
+
+Resources:
+  NlpProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: src/handler.handler
+      Description: Processa raw_crawls com IA e gera eventos estruturados
+      Environment:
+        Variables:
+          MONGODB_URI: !Ref MongoDbUri
+          MONGODB_DB_NAME: !Ref MongoDbName
+          GROQ_API_KEY: !Ref GroqApiKey
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 6 * * ? *)
+            Description: Executa diariamente as 6h30 UTC
+            Input: '{"batchSize": 50}'
+            Enabled: true
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2022"
+        Sourcemap: false
+        EntryPoints:
+          - src/handler.ts
+
+Outputs:
+  NlpProcessorFunction:
+    Description: ARN da Lambda NLP Processor
+    Value: !GetAtt NlpProcessorFunction.Arn
+  NlpProcessorFunctionName:
+    Description: Nome da Lambda NLP Processor
+    Value: !Ref NlpProcessorFunction

@@ -1,0 +1,26 @@
+{
+  "name": "role-sc-processador-nlp-webcrawls",
+  "version": "1.0.0",
+  "description": "NLP processor que extrai eventos estruturados de raw_crawls usando Groq/Llama",
+  "main": "dist/handler.js",
+  "scripts": {
+    "invoke": "tsx src/invoke-local.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "sam build",
+    "deploy": "sam deploy --guided"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "esbuild": "^0.27.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "groq-sdk": "^1.1.1",
+    "mongodb": "^7.1.0"
+  }
+}
