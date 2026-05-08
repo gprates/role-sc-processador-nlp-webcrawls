@@ -26,6 +26,7 @@ Resources:
   NlpProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: PROCESSAR_CRAWLS_NLP
       CodeUri: ./
       Handler: src/handler.handler
       Description: Processa raw_crawls com IA e gera eventos estruturados
@@ -35,13 +36,15 @@ Resources:
           MONGODB_DB_NAME: !Ref MongoDbName
           GROQ_API_KEY: !Ref GroqApiKey
       Events:
-        DailySchedule:
-          Type: Schedule
+        HourlySchedule:
+          Type: ScheduleV2
           Properties:
-            Schedule: cron(30 6 * * ? *)
-            Description: Executa diariamente as 6h30 UTC
+            Name: RODAR_PROCESSADOR_NLP_DAS_8_AS_19
+            Description: Executa 1x por hora das 8h as 19h (America/Sao_Paulo)
+            ScheduleExpression: cron(0 8-19 * * ? *)
+            ScheduleExpressionTimezone: America/Sao_Paulo
             Input: '{"batchSize": 50}'
-            Enabled: true
+            State: ENABLED
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
