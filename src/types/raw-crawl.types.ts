@@ -7,6 +7,7 @@ export interface RawCrawl {
   url: string;
   title: string;
   rawText: string;
+  imageUrl: string | null;
   publishedAt: string;
   crawledAt: Date;
   processed: boolean;

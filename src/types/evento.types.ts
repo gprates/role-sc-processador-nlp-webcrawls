@@ -13,6 +13,7 @@ export interface Evento {
   municipio: string;
   site: string;
   url: string;
+  imageUrl: string | null;
   publishedAt: string;
   processedAt: Date;
   rawCrawlId: ObjectId;

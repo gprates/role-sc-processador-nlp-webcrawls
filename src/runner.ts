@@ -61,6 +61,7 @@ export const run = async (options: RunOptions = {}): Promise<ProcessingResult> =
         municipio: rawCrawl.municipality,
         site: rawCrawl.site,
         url: rawCrawl.url,
+        imageUrl: rawCrawl.imageUrl ?? null,
         publishedAt: rawCrawl.publishedAt,
         processedAt: new Date(),
         rawCrawlId: rawCrawl._id!,

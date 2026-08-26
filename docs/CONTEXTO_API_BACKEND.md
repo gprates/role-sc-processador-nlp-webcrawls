@@ -90,6 +90,7 @@ interface Evento {
   municipio: string;
   site: string;
   url: string;
+  imageUrl: string | null;
   publishedAt: string;
   processedAt: Date;
   rawCrawlId: ObjectId;
@@ -277,6 +278,7 @@ Lista eventos com filtros e paginação. Retorna **apenas** documentos com `isEv
       "municipio": "Camboriú",
       "site": "Camboriú",
       "url": "https://camboriu.sc.gov.br/noticia/festival-sabores-do-mar",
+      "imageUrl": "https://camboriu.sc.gov.br/uploads/festival-sabores-do-mar.jpg",
       "publishedAt": "14 de março de 2026",
       "processedAt": "2026-03-14T09:30:00.000Z"
     }
@@ -331,6 +333,7 @@ Retorna os detalhes de um evento específico.
     "municipio": "Itajaí",
     "site": "Fundação Cultural de Itajaí",
     "url": "https://fundacaocultural.itajai.sc.gov.br/noticias/exposicao-litoral-vivo",
+    "imageUrl": null,
     "publishedAt": "10 de março de 2026",
     "processedAt": "2026-03-10T09:30:00.000Z"
   }
