@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Description: API Key do Groq
     NoEcho: true
+  GroqModel:
+    Type: String
+    Description: Modelo do Groq usado na extracao (trocavel sem alterar codigo)
+    Default: openai/gpt-oss-20b
 
 Globals:
   Function:
@@ -35,6 +39,7 @@ Resources:
           MONGODB_URI: !Ref MongoDbUri
           MONGODB_DB_NAME: !Ref MongoDbName
           GROQ_API_KEY: !Ref GroqApiKey
+          GROQ_MODEL: !Ref GroqModel
       Events:
         HourlySchedule:
           Type: ScheduleV2

@@ -49,7 +49,7 @@ Sites municipais → Lambda Crawler → MongoDB (raw_crawls)
 - **Lambda AWS** via **SAM** (`template.yaml`)
 - Trigger: **EventBridge** cron às 6h30 UTC (após o crawler)
 - Busca documentos `raw_crawls` com `processed: false`
-- Envia `rawText` para a **API Groq** (modelo `llama-3.1-8b-instant`, JSON mode, temperature 0.1)
+- Envia `rawText` para a **API Groq** (modelo `openai/gpt-oss-20b`, JSON mode, temperature 0.1)
 - Prompt em português classifica se é evento ou não e extrai: título, descrição, dataInício, dataFim, horário, local, categoria
 - Salva na coleção `eventos` (inclusive não-eventos com `isEvent: false`)
 - Marca `processed: true` no `raw_crawl` original

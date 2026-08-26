@@ -3,7 +3,7 @@ import { createLogger } from '../utils/logger.utils';
 
 const logger = createLogger('GroqClient');
 
-const MODEL = 'llama-3.1-8b-instant';
+const DEFAULT_MODEL = 'openai/gpt-oss-20b';
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 5_000;
 
@@ -26,7 +26,7 @@ export const callGroq = async (systemPrompt: string, userContent: string): Promi
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
       const response = await getClient().chat.completions.create({
-        model: MODEL,
+        model: process.env.GROQ_MODEL || DEFAULT_MODEL,
         response_format: { type: 'json_object' },
         temperature: 0.1,
         messages: [
