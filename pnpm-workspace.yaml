@@ -1,0 +1,5 @@
+# O esbuild (usado pelo tsx no `pnpm invoke` e pelo `sam build`) tem script de
+# pós-instalação. Sem esta liberação, o pnpm 11+ encerra o `pnpm install` com
+# ERR_PNPM_IGNORED_BUILDS (código de saída 1).
+allowBuilds:
+  esbuild: true
