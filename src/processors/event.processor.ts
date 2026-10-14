@@ -27,6 +27,7 @@ NÃO são eventos: notícias sobre obras públicas, licitações, decretos, cont
 8. horario deve manter o formato original do texto (ex: "19h", "10h às 22h", "a partir das 14h")
 9. local deve incluir o nome do espaço e endereço se disponível
 10. categoria deve ser EXATAMENTE uma das opções: "Cultura", "Esporte", "Gastronomia", "Educação", "Saúde", "Meio Ambiente", "Turismo", "Religião", "Outro"
+11. O idioma do texto é português, então a descrição do evento deve ser em português, mesmo que o texto original esteja em outro idioma.
 
 ## Formato de resposta (JSON)
 
