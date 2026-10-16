@@ -17,6 +17,7 @@ export interface Evento {
   publishedAt: string;
   processedAt: Date;
   rawCrawlId: ObjectId;
+  duplicateOf: ObjectId | null;
 }
 
 export type EventoInsert = Omit<Evento, '_id'>;

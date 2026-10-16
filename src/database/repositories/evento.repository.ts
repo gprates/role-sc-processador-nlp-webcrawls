@@ -5,6 +5,7 @@ import { createLogger } from '../../utils/logger.utils';
 const logger = createLogger('EventoRepository');
 
 const COLLECTION_NAME = 'eventos';
+const MAX_DUPLICATE_CANDIDATES = 20;
 
 const getCollection = (db: Db): Collection<Evento> => {
   return db.collection<Evento>(COLLECTION_NAME);
@@ -22,6 +23,28 @@ export const EventoRepository = {
       }
       throw error;
     }
+  },
+
+  /**
+   * Eventos do município cujo período (dataInicio até dataFim, ou só dataInicio) se sobrepõe
+   * ao informado. São os candidatos a duplicata de um evento novo.
+   */
+  findOverlapping: async (
+    db: Db,
+    filtro: { municipio: string; dataInicio: Date; dataFim: Date | null },
+  ): Promise<Evento[]> => {
+    const inicio = filtro.dataInicio;
+    const fim = filtro.dataFim ?? filtro.dataInicio;
+
+    return getCollection(db)
+      .find({
+        municipio: filtro.municipio,
+        isEvent: true,
+        dataInicio: { $lte: fim },
+        $or: [{ dataFim: { $gte: inicio } }, { dataFim: null, dataInicio: { $gte: inicio } }],
+      })
+      .limit(MAX_DUPLICATE_CANDIDATES)
+      .toArray();
   },
 
   ensureIndexes: async (db: Db): Promise<void> => {

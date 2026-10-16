@@ -15,13 +15,16 @@ A cada execução (`src/runner.ts`):
 1. Conecta ao MongoDB e garante os índices de `eventos`: `{url: 1}` único, `{municipio: 1, isEvent: 1}` e `{dataInicio: 1}`.
 2. Busca até `batchSize` documentos de `raw_crawls` com `processed: false` (padrão 50 na Lambda e 5 no `pnpm invoke`), opcionalmente só de um município.
 3. Para cada documento, envia o campo `rawText` ao modelo da Groq (modo JSON, `temperature: 0.1`). O prompt e as regras de extração estão em `src/processors/event.processor.ts`.
-4. Valida a resposta, normaliza a categoria e grava um documento em `eventos`, inclusive quando o texto não é evento (`isEvent: false`).
-5. Marca o documento de origem como `processed: true` e espera 2,5 s antes do próximo.
-6. Devolve um resumo: `{processed, saved, skipped, errors, elapsedSeconds}`.
+4. Valida a resposta e normaliza a categoria.
+5. Se é um evento com `dataInicio`, verifica se ele já foi cadastrado a partir de outra notícia (ver **Eventos repetidos** adiante).
+6. Grava um documento em `eventos`, inclusive quando o texto não é evento (`isEvent: false`).
+7. Marca o documento de origem como `processed: true` e espera 2,5 s antes do próximo.
+8. Devolve um resumo: `{processed, saved, skipped, duplicates, errors, elapsedSeconds}`.
 
 Comportamentos importantes:
 
 - **Duplicados**: se já existe evento com a mesma `url`, ele não é gravado de novo (conta em `skipped`), e o `raw_crawl` é marcado como processado.
+- **Eventos repetidos**: as prefeituras costumam publicar mais de uma notícia sobre o mesmo evento, com URLs e títulos diferentes (por exemplo, um anúncio e um lembrete na véspera). Para não exibir o evento duas vezes, o processador busca em `eventos` os candidatos: eventos (`isEvent: true`) do mesmo município cujo período (`dataInicio` até `dataFim`) se sobrepõe ao do evento novo, no máximo 20. Se houver algum, faz uma segunda chamada à Groq comparando o evento novo com eles (prompt em `src/processors/duplicate.processor.ts`); sem candidatos, não há chamada extra. Se o LLM apontar um deles, o evento novo é gravado com `isEvent: false` e `duplicateOf` com o `_id` do evento já cadastrado, mantendo os dados extraídos, e conta em `duplicates` (além de `saved`). Assim a API, que só lista `isEvent: true`, não o exibe, sem precisar de mudança. Eventos sem `dataInicio` não são verificados. O primeiro evento gravado é o que fica visível; o repetido não altera os dados dele. Na dúvida, o prompt manda o LLM não marcar como repetido, porque esconder um evento diferente é pior do que exibir um repetido.
 - **Falhas**: se o LLM falhar ou devolver JSON inválido, o documento conta em `errors` e continua `processed: false`; ele é tentado de novo na próxima execução. O SDK da Groq repete erros 5xx e 429, e o código repete 429 mais duas vezes (espera de 5 s e 10 s).
 - **Município**: o filtro usa o nome de exibição gravado pelo crawler em `municipality` (por exemplo `Camboriú`, `Balneário Camboriú`), não a chave do crawler (`camboriu`).
 
@@ -37,10 +40,11 @@ Campos usados: `_id`, `site`, `municipality`, `url`, `title`, `rawText`, `imageU
 | `descricao`, `horario`, `local` | LLM (texto ou `null`) |
 | `dataInicio`, `dataFim` | LLM no formato `YYYY-MM-DD`, gravados como `Date` à meia-noite no fuso do processo (UTC na Lambda) |
 | `categoria` | LLM, normalizada para `Cultura`, `Esporte`, `Gastronomia`, `Educação`, `Saúde`, `Meio Ambiente`, `Turismo`, `Religião` ou `Outro` (valor desconhecido vira `Outro`) |
-| `isEvent` | LLM (`false` zera os outros campos extraídos) |
+| `isEvent` | LLM (`false` zera os outros campos extraídos); também `false` quando o evento é repetido |
 | `municipio`, `site`, `url`, `imageUrl`, `publishedAt` | copiados do `raw_crawl` (`municipality` vira `municipio`) |
 | `processedAt` | data do processamento |
 | `rawCrawlId` | `_id` do `raw_crawl` |
+| `duplicateOf` | `_id` do evento já cadastrado do qual este é repetição, ou `null` |
 
 ### Estrutura
 
@@ -50,7 +54,7 @@ src/
   invoke-local.ts       execução local: pnpm invoke [municipio] [batchSize]
   runner.ts             laço de processamento
   groq/groq.client.ts   chamada à Groq (modelo, retry de 429)
-  processors/           prompt, validação da resposta e conversão de datas
+  processors/           prompts (extração e eventos repetidos), validação das respostas e conversão de datas
   database/             conexão MongoDB e repositórios de raw_crawls e eventos
   types/                tipos de raw_crawls, eventos e da Lambda
 template.yaml           stack AWS SAM (função + agendamento)
@@ -135,6 +139,8 @@ Para testar sem chamar a Groq, defina `GROQ_BASE_URL` com o endereço de um serv
   "categoria": "Cultura"
 }
 ```
+
+Quando o evento tem data e há candidatos a repetição (ver **Eventos repetidos**), o processador faz uma segunda chamada, cujo prompt de sistema pede o campo `duplicadoDe`. Nela o conteúdo do usuário é um JSON com `eventoNovo` e `eventosCadastrados` (cada um com `numero`), e a resposta deve ser `{"duplicadoDe": 1}` (o `numero` do evento repetido) ou `{"duplicadoDe": null}`.
 
 Nesse caso a `GROQ_API_KEY` pode ter qualquer valor não vazio. Para uso real, basta uma `GROQ_API_KEY` válida e deixar `GROQ_BASE_URL` sem definir.
 

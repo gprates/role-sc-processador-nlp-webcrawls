@@ -7,6 +7,7 @@ export interface ProcessingResult {
   processed: number;
   saved: number;
   skipped: number;
+  duplicates: number;
   errors: number;
   elapsedSeconds: number;
 }
